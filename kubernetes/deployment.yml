@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: projeto-pld-deployment
+  labels:
+    app: projeto-pld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: projeto-pld
+  template:
+    metadata:
+      labels:
+        app: projeto-pld
+    spec:
+      containers:
+        - name: projeto-pld-container
+          image: ghcr.io/daviseemann/projeto-pld:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8501
+          resources:
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+      imagePullSecrets:
+        - name: ghcr-auth
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: projeto-pld-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: projeto-pld
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8501
