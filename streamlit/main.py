@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
-from helpers import (
-    calculate_kpis,
+from helpers.helpers import (
+    KPI_Calculator,
     plot_plotly,
     plot_combined_plotly,
 )  # Importar funções auxiliares
+
+from helpers.data_pipeline import download_pld, clean_pld_data
 
 # Configuração da página
 st.set_page_config(
@@ -27,7 +29,10 @@ def load_data():
 
 # Botão para recarregar os dados
 if st.sidebar.button("Recarregar dados"):
+    download_pld()
+    clean_pld_data()
     st.cache_data.clear()
+
 
 # Carregar os dados
 df_reshaped = load_data()
@@ -56,7 +61,8 @@ df_filtered = df_reshaped[
 ]
 
 # Calcular KPIs com os dados filtrados
-kpis = calculate_kpis(df_filtered)
+kpi_calculator = KPI_Calculator(df_filtered)
+kpis = kpi_calculator.calculate_kpis()
 
 # Navegação de páginas
 page = st.sidebar.selectbox(
