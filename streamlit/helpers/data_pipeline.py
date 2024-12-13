@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import datetime
 import os
+import streamlit as st
 
 
 def download_pld():
@@ -23,16 +24,16 @@ def download_pld():
         # Se o elemento foi encontrado, extrair o valor de data-url
         if option_element:
             data_url = option_element.get("data-url")
-            print(f"URL encontrada: {data_url}")
+            st.info(f"URL encontrada: {data_url}")
         else:
-            print("Elemento <option> não encontrado.")
+            st.error("Elemento <option> não encontrado.")
     else:
-        print(f"Erro ao acessar o site: {response.status_code}")
+        st.error(f"Erro ao acessar o site: {response.status_code}")
 
     # URL do arquivo
     url = data_url
 
-    print(f"cwd{os.getcwd()}")
+    # st.info(f"Diretório atual: {os.getcwd()}")
     # Criar diretório se não existir
 
     raw_data_dir = "./data/bruto"
@@ -49,15 +50,15 @@ def download_pld():
     if response.status_code == 200:
         with open(filename, "wb") as file:
             file.write(response.content)
-        print(f"Arquivo salvo como {filename}")
+        st.success(f"Arquivo salvo como {filename}")
     else:
-        print(f"Erro ao baixar o arquivo: {response.status_code}")
+        st.error(f"Erro ao baixar o arquivo: {response.status_code}")
 
-    return {"status": "Arquivo gerado com sucesso"}
+    return st.success("Arquivo salvo com sucesso")
 
 
 def clean_pld_data():
-    print(f"cwd{os.getcwd()}")
+    # st.info(f"Diretório atual: {os.getcwd()}")
     excel_path = "./data/bruto/Historico_do_Preco_Horario.xlsx"
     df = pd.ExcelFile(excel_path)
     data = df.parse(sheet_name=df.sheet_names[0])
@@ -69,13 +70,28 @@ def clean_pld_data():
     )
 
     # Criar diretório se não existir
-    clean_data_dir = "./data/clean_data"
+    clean_data_dir = "./data/limpo"
     if not os.path.exists(clean_data_dir):
         os.makedirs(clean_data_dir)
 
     data_melted.to_csv(
-        f"{clean_data_dir}/dados_{datetime.datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
+        f"{clean_data_dir}/dados_{datetime.datetime.utcnow().strftime('%Y-%m-%d')}.csv",
         index=False,
     )
 
-    return {"status": "Dados apagados com sucesso"}
+    return st.success("Dados limpos com sucesso.")
+
+
+def get_latest_clean_data_file():
+    clean_data_dir = "./data/limpo"
+    files = [
+        f
+        for f in os.listdir(clean_data_dir)
+        if f.startswith("dados_") and f.endswith(".csv")
+    ]
+    if not files:
+        raise FileNotFoundError("Nenhum arquivo de dados encontrado.")
+    latest_file = max(
+        files, key=lambda x: datetime.datetime.strptime(x, "dados_%Y-%m-%d.csv")
+    )
+    return os.path.join(clean_data_dir, latest_file)

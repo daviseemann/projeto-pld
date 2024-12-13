@@ -1,100 +1,66 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from datetime import datetime, timedelta
 
 
-class KPI_Calculator:
-    def __init__(self, df):
-        self.df = df
-        self.kpis = {}
+def calculate_pld_maximo(df):
+    return df.groupby(["Data", "Submercado"])["Valor"].max().reset_index()
 
-    def calculate_pld_medio_diario(self):
-        self.kpis["PLD Médio Diário"] = (
-            self.df.groupby(["Data", "Submercado"])["Valor"].mean().reset_index()
+
+def calculate_pld_minimo(df):
+    return df.groupby(["Data", "Submercado"])["Valor"].min().reset_index()
+
+
+def calculate_desvio_padrao_diario(df):
+    return df.groupby(["Data", "Submercado"])["Valor"].std().reset_index()
+
+
+def calculate_spread_diario(df):
+    pld_maximo = calculate_pld_maximo(df)
+    pld_minimo = calculate_pld_minimo(df)
+    spread_diario = pld_maximo.copy()
+    spread_diario["Valor"] = pld_maximo["Valor"] - pld_minimo["Valor"]
+    return spread_diario
+
+
+def apply_filters(df, date_key="date_filter", submercado_key="submercado_filter"):
+    st.header("Filtros")
+    col1, col2 = st.columns(2)
+
+    # Definir intervalo de datas padrão como o ano corrente, de 01/01 até o momento no ano
+    end_date = df["Data"].max().date()
+    start_date = datetime(end_date.year, 1, 1).date()
+
+    with col1:
+        data_filter = st.date_input(
+            "Selecione o intervalo de datas:",
+            [start_date, end_date],
+            min_value=df["Data"].min().date(),
+            max_value=end_date,
+            key=date_key,
         )
+    data_filter = pd.to_datetime(data_filter)
 
-    def calculate_pld_medio_mensal(self):
-        self.kpis["PLD Médio Mensal"] = (
-            self.df.groupby([self.df["Data"].dt.to_period("M"), "Submercado"])["Valor"]
-            .mean()
-            .reset_index()
-        )
-        self.kpis["PLD Médio Mensal"]["Data"] = self.kpis["PLD Médio Mensal"][
-            "Data"
-        ].astype(str)
-
-    def calculate_pld_maximo(self):
-        self.kpis["PLD Máximo"] = (
-            self.df.groupby(["Data", "Submercado"])["Valor"].max().reset_index()
-        )
-
-    def calculate_pld_minimo(self):
-        self.kpis["PLD Mínimo"] = (
-            self.df.groupby(["Data", "Submercado"])["Valor"].min().reset_index()
-        )
-
-    def calculate_desvio_padrao_diario(self):
-        self.kpis["Desvio Padrão Diário"] = (
-            self.df.groupby(["Data", "Submercado"])["Valor"].std().reset_index()
-        )
-
-    def calculate_spread_diario(self):
-        self.kpis["Spread Diário"] = (
-            self.kpis["PLD Máximo"]["Valor"] - self.kpis["PLD Mínimo"]["Valor"]
-        ).reset_index(name="Valor")
-
-    def calculate_pld_total_mensal(self):
-        self.kpis["PLD Total Mensal"] = (
-            self.df.groupby([self.df["Data"].dt.to_period("M"), "Submercado"])["Valor"]
-            .sum()
-            .reset_index()
-        )
-        self.kpis["PLD Total Mensal"]["Data"] = self.kpis["PLD Total Mensal"][
-            "Data"
-        ].astype(str)
-
-    def calculate_numero_dias_acima_media(self):
-        self.kpis["Número de Dias Acima da Média"] = (
-            (self.df["Valor"] > self.df["Valor"].mean())
-            .groupby([self.df["Data"], "Submercado"])
-            .sum()
-            .reset_index()
-        )
-
-    def calculate_kpis(self):
-        st.info("Calculando KPIs...", icon="ℹ️")
-        self.calculate_pld_medio_diario()
-        self.calculate_pld_medio_mensal()
-        self.calculate_pld_maximo()
-        self.calculate_pld_minimo()
-        self.calculate_desvio_padrao_diario()
-        self.calculate_spread_diario()
-        self.calculate_pld_total_mensal()
-        self.calculate_numero_dias_acima_media()
-        st.success("KPIs calculados com sucesso.", icon="✅")
-        return self.kpis
-
-
-# Função para visualização com Plotly
-def plot_plotly(kpis, title, x, y):
-    fig = px.line(kpis, x=x, y=y, color="Submercado", title=title)
-    fig.update_layout(xaxis_title=x, yaxis_title=y)
-    st.plotly_chart(fig)
-    st.success(f"Gráfico {title} gerado com sucesso.", icon="✅")
-
-
-# Função para visualização combinada com Plotly
-def plot_combined_plotly(kpis, title, x, y_dict):
-    fig = px.line()
-    for y_label, y_data in y_dict.items():
-        for submercado in kpis["Submercado"].unique():
-            sub_df = kpis[kpis["Submercado"] == submercado]
-            fig.add_scatter(
-                x=sub_df[x],
-                y=sub_df[y_data],
-                mode="lines",
-                name=f"{y_label} - {submercado}",
+    with col2:
+        if "Submercado" in df.columns:
+            submercado_filter = st.segmented_control(
+                "Selecione os submercados:",
+                options=df["Submercado"].unique(),
+                default=df["Submercado"].unique(),
+                selection_mode="multi",
+                key=submercado_key,
             )
-    fig.update_layout(title=title, xaxis_title=x, yaxis_title="Valor")
-    st.plotly_chart(fig)
-    st.success(f"Gráfico {title} gerado com sucesso.", icon="✅")
+
+            df_filtered = df[
+                (df["Data"] >= data_filter[0])
+                & (df["Data"] <= data_filter[1])
+                & (df["Submercado"].isin(submercado_filter))
+            ]
+        else:
+            st.warning("A coluna 'Submercado' não está presente nos dados.")
+            df_filtered = df[
+                (df["Data"] >= data_filter[0]) & (df["Data"] <= data_filter[1])
+            ]
+
+    return df_filtered
