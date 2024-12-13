@@ -62,12 +62,12 @@ def clean_pld_data():
     excel_path = "./data/bruto/Historico_do_Preco_Horario.xlsx"
     df = pd.ExcelFile(excel_path)
     data = df.parse(sheet_name=df.sheet_names[0])
-    data.dropna(inplace=True)
     data_melted = data.melt(
         id_vars=["Hora", "Submercado"],  # Colunas que permanecem como identificadores
         var_name="Data",  # Nome para a nova coluna que conterá os nomes das colunas originais (datas)
         value_name="Valor",  # Nome para a nova coluna que conterá os valores das colunas originais
     )
+    data.dropna(inplace=True)
 
     # Criar diretório se não existir
     clean_data_dir = "./data/limpo"
