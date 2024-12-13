@@ -25,6 +25,12 @@ jobs:
         run: |
           docker run -d --name projeto-pld-container -p 0.0.0.0:8501:8501 ghcr.io/${{ github.repository_owner }}/projeto-pld:latest
 
+      - name: Print container logs
+        run: docker logs -f projeto-pld-container
+
+      - name: Print access IP
+        run: echo "Access the application at http://$(curl -s ifconfig.me):8501"
+
       - name: Keep container running
         run: sleep infinity
 
