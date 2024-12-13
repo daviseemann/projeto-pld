@@ -14,6 +14,27 @@ Este repositório contém um painel interativo desenvolvido com **Streamlit** pa
 
 ---
 
+## Requisitos
+
+### Requisitos do Sistema
+
+Para executar o projeto, são necessários os seguintes requisitos:
+
+- **Docker**: Certifique-se de que o Docker está instalado em seu sistema. Caso não tenha, você pode instalá-lo [aqui](https://www.docker.com/products/docker-desktop).
+
+Se optar por executar o projeto sem Docker, será necessário:
+
+- **Python**: Versão 3.7 ou superior.
+- **Bibliotecas Python**: As dependências específicas estão listadas no arquivo `requirements.txt` do repositório.
+
+Para instalar as dependências listadas no `requirements.txt`, utilize o seguinte comando após ativar seu ambiente virtual:
+
+```sh
+pip install -r requirements.txt
+```
+
+---
+
 ## Instruções de Configuração
 
 ### Executando Localmente a Partir do Repositório
