@@ -11,3 +11,9 @@ venv.bak/
 __pycache__/
 
 .pytest_cache/
+EDA/data/Historico_do_Preco_Horario_-_17_de_abril_de_2018_a_6_de_novembro_de_2024.xlsx
+EDA/data/series_temporais/NORDESTE.csv
+EDA/data/series_temporais/NORTE.csv
+EDA/data/series_temporais/SUDESTE.csv
+EDA/data/series_temporais/SUL.csv
+streamlit/data/clean_data.csv
